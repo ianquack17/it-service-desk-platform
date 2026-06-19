@@ -13,3 +13,4 @@ class Ticket(Base):
     priority = Column(SqlEnum("Low", "Medium", "High", "Urgent", name="ticket_priority"))
     created_at = Column(DateTime, nullable=False, server_default=func.now())
     updated_at = Column(DateTime, nullable=True)
+    category = Column(SqlEnum("LMS", "Password & Login Issue", "General Support", "Hardware Issue", "Walk-up", "Phishing"))

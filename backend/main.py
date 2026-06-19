@@ -3,19 +3,8 @@ from pydantic import BaseModel, Field
 from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 from database import SessionLocal
+from schemas import TicketCreate, TicketUpdate
 import models
-
-class TicketCreate(BaseModel):
-    title: str = Field(..., min_length=1, max_length=100)
-    description: str = Field(..., min_length=1)
-    status: str = "Open"
-    priority: str = "Low"
-
-class TicketUpdate(BaseModel):
-    title: str | None = None
-    description: str | None = None
-    status: str | None = None
-    priority: str | None = None
 
 
 app = FastAPI()
@@ -26,8 +15,6 @@ def get_db():
     finally:
         db.close()
 
-tickets = []
-next_id = 1
 
 @app.get("/")
 def read_root():
@@ -41,6 +28,10 @@ def get_tickets(db: Session = Depends(get_db)):
 def create_ticket(ticket: TicketCreate, db: Session = Depends(get_db)):
 
     new_ticket_data = ticket.model_dump()
+    new_ticket_data["category"] = categorize_ticket(
+        new_ticket_data["title"],
+        new_ticket_data["description"]
+    )
     new_ticket = models.Ticket(**new_ticket_data)
     db.add(new_ticket)
     db.commit()
@@ -109,3 +100,15 @@ def update_ticket(ticket_id: int, updated_ticket: TicketUpdate, db: Session = De
 
     return {"message": "Ticket successfully modified",
             "ticket": ticket}
+
+
+# Helper Functions
+
+def categorize_ticket(title: str, description: str):
+    title = title.lower()
+    description = description.lower()
+
+    if "password" in title:
+        return "Password & Login Issue"
+    else:
+        return "General Support"
