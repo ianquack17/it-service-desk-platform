@@ -4,10 +4,20 @@ from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 from database import SessionLocal
 from schemas import TicketCreate, TicketUpdate
+from fastapi.middleware.cors import CORSMiddleware
 import models
 
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
+
 def get_db():
     db = SessionLocal()
     try:
@@ -31,6 +41,10 @@ def create_ticket(ticket: TicketCreate, db: Session = Depends(get_db)):
     new_ticket_data["category"] = categorize_ticket(
         new_ticket_data["title"],
         new_ticket_data["description"]
+    )
+    new_ticket_data["priority"] = priority_ticket(
+        new_ticket_data["title"],
+        new_ticket_data["Description"]
     )
     new_ticket = models.Ticket(**new_ticket_data)
     db.add(new_ticket)
@@ -108,7 +122,30 @@ def categorize_ticket(title: str, description: str):
     title = title.lower()
     description = description.lower()
 
+    if "phishing" in title:
+        return "Phishing"
+
     if "password" in title:
         return "Password & Login Issue"
+    
+    if "blackboard" in title:
+        return "LMS"
+    
     else:
         return "General Support"
+    
+def priority_ticket(title: str, description: str):
+    title = title.lower()
+    description = description.lower()
+
+    if "phishing" in title:
+        return "Urgent"
+
+    elif "password" in title:
+        return "medium"
+    
+    elif "blackboard" in title:
+        return "medium"
+    
+    else:
+        return "low"
